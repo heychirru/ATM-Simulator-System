@@ -1,113 +1,28 @@
 package ASimulatorSystem;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 
-//import java.sql.*;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
+/** Main authenticated ATM menu. No PIN is retained after authentication. */
+public class Transactions extends JFrame implements ActionListener {
+    private final long accountId;
+    private final JButton deposit=new JButton("DEPOSIT"), withdraw=new JButton("CASH WITHDRAWAL"), fastCash=new JButton("FAST CASH"), statement=new JButton("MINI STATEMENT"), pin=new JButton("PIN CHANGE"), balance=new JButton("BALANCE ENQUIRY"), exit=new JButton("LOG OUT");
 
-public class Transactions extends JFrame implements ActionListener{
-
-    JLabel l1;
-    JButton b1,b2,b3,b4,b5,b6,b7;
-    String pin;
-    Transactions(String pin){
-        this.pin = pin;
-        ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("ASimulatorSystem/icons/atm.jpg"));
-        Image i2 = i1.getImage().getScaledInstance(1000, 1180, Image.SCALE_DEFAULT);
-        ImageIcon i3 = new ImageIcon(i2);
-        JLabel l2 = new JLabel(i3);
-        l2.setBounds(0, 0, 960, 1080);
-        add(l2);
-        
-        l1 = new JLabel("Please Select Your Transaction");
-        l1.setForeground(Color.WHITE);
-        l1.setFont(new Font("System", Font.BOLD, 16));
-        
-       
-        b1 = new JButton("DEPOSIT");
-        b2 = new JButton("CASH WITHDRAWL");
-        b3 = new JButton("FAST CASH");
-        b4 = new JButton("MINI STATEMENT");
-        b5 = new JButton("PIN CHANGE");
-        b6 = new JButton("BALANCE ENQUIRY");
-        b7 = new JButton("EXIT");
-        
-        setLayout(null);
-        
-        l1.setBounds(235,400,700,35);
-        l2.add(l1);
-        
-        b1.setBounds(170,499,150,35);
-        l2.add(b1);
-        
-        b2.setBounds(390,499,150,35);
-        l2.add(b2);
-        
-        b3.setBounds(170,543,150,35);
-        l2.add(b3);
-        
-        b4.setBounds(390,543,150,35);
-        l2.add(b4);
-        
-        b5.setBounds(170,588,150,35);
-        l2.add(b5);
-        
-        b6.setBounds(390,588,150,35);
-        l2.add(b6);
-        
-        b7.setBounds(390,633,150,35);
-        l2.add(b7);
-        
-        
-        b1.addActionListener(this);
-        b2.addActionListener(this);
-        b3.addActionListener(this);
-        b4.addActionListener(this);
-        b5.addActionListener(this);
-        b6.addActionListener(this);
-        b7.addActionListener(this);
-        
-        
-        setSize(960,1080);
-        setLocation(500,0);
-        setUndecorated(true);
+    public Transactions(long accountId){
+        this.accountId=accountId; setTitle("ATM - Transactions");setSize(650,560);setLocationRelativeTo(null);setDefaultCloseOperation(EXIT_ON_CLOSE);setLayout(null);getContentPane().setBackground(Color.WHITE);
+        JLabel title=new JLabel("PLEASE SELECT YOUR TRANSACTION");title.setBounds(145,55,400,35);title.setFont(new Font("Arial",Font.BOLD,20));add(title);
+        JButton[] buttons={deposit,withdraw,fastCash,statement,pin,balance,exit}; int y=125;
+        for(int i=0;i<buttons.length;i++){JButton b=buttons[i];b.setBounds(i==6?225:(i%2==0?105:345),y,200,38);b.setBackground(Color.BLACK);b.setForeground(Color.WHITE);b.addActionListener(this);add(b);if(i<6&&i%2==1)y+=55;if(i==6)y+=55;}
         setVisible(true);
-        
-        
-        
     }
-    
-    public void actionPerformed(ActionEvent ae){
-        if(ae.getSource()==b1){ 
-            setVisible(false);
-            new Deposit(pin).setVisible(true);
-        }else if(ae.getSource()==b2){ 
-            setVisible(false);
-            new Withdrawl(pin).setVisible(true);
-        }else if(ae.getSource()==b3){ 
-            setVisible(false);
-            new FastCash(pin).setVisible(true);
-        }else if(ae.getSource()==b4){ 
-            new MiniStatement(pin).setVisible(true);
-        }else if(ae.getSource()==b5){ 
-            setVisible(false);
-            new Pin(pin).setVisible(true);
-        }else if(ae.getSource()==b6){ 
-            this.setVisible(false);
-            new BalanceEnquiry(pin).setVisible(true);
-        }else if(ae.getSource()==b7){ 
-            System.exit(0);
-        }
-    }
-    
-    public static void main(String[] args){
-        new Transactions("").setVisible(true);
+    @Override public void actionPerformed(ActionEvent e){
+        if(e.getSource()==deposit){dispose();new Deposit(accountId);}
+        else if(e.getSource()==withdraw){dispose();new Withdrawal(accountId);}
+        else if(e.getSource()==fastCash){dispose();new FastCash(accountId);}
+        else if(e.getSource()==statement){new MiniStatement(accountId);}
+        else if(e.getSource()==pin){dispose();new Pin(accountId);}
+        else if(e.getSource()==balance){dispose();new BalanceEnquiry(accountId);}
+        else {dispose();new Login();}
     }
 }
