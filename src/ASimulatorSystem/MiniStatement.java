@@ -1,50 +1,12 @@
 package ASimulatorSystem;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
+import ASimulatorSystem.dao.TransactionDao;
+import ASimulatorSystem.service.TransactionService;
+import java.awt.*;import java.awt.event.*;import javax.swing.*;
 
-public class MiniStatement extends JFrame implements ActionListener {
-
-    private final JButton close;
-    private final String pin;
-
-    MiniStatement(String pin) {
-        this.pin = pin;
-        setTitle("MINI STATEMENT");
-        setLayout(null);
-
-        JLabel title = new JLabel("Mini statement placeholder");
-        title.setBounds(155, 100, 340, 30);
-        title.setFont(new Font("Arial", Font.BOLD, 20));
-        add(title);
-
-        JLabel pinLabel = new JLabel("PIN: " + pin);
-        pinLabel.setBounds(220, 150, 220, 25);
-        add(pinLabel);
-
-        close = new JButton("CLOSE");
-        close.setBounds(240, 230, 110, 35);
-        close.setBackground(Color.BLACK);
-        close.setForeground(Color.WHITE);
-        close.addActionListener(this);
-        add(close);
-
-        getContentPane().setBackground(Color.WHITE);
-        setSize(600, 400);
-        setLocation(600, 250);
-        setVisible(true);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent ae) {
-        if (ae.getSource() == close) {
-            setVisible(false);
-            new Transactions(pin).setVisible(true);
-        }
-    }
+public class MiniStatement extends JFrame implements ActionListener{
+    private final long accountId; private final JTextArea history=new JTextArea(); private final JButton close=new JButton("CLOSE");
+    public MiniStatement(long accountId){this.accountId=accountId;setTitle("MINI STATEMENT");setSize(650,500);setLocationRelativeTo(null);setDefaultCloseOperation(DISPOSE_ON_CLOSE);setLayout(null);JLabel t=new JLabel("RECENT TRANSACTIONS");t.setBounds(190,25,300,35);t.setFont(new Font("Arial",Font.BOLD,22));add(t);history.setEditable(false);history.setFont(new Font("Monospaced",Font.PLAIN,13));JScrollPane pane=new JScrollPane(history);pane.setBounds(45,80,550,300);add(pane);close.setBounds(250,405,120,35);close.setBackground(Color.BLACK);close.setForeground(Color.WHITE);close.addActionListener(this);add(close);load();setVisible(true);}
+    private void load(){try{StringBuilder s=new StringBuilder();for(TransactionDao.TransactionRecord r:new TransactionService().recent(accountId))s.append(r.createdAt()).append("  ").append(r.type()).append("  Rs. ").append(r.amount()).append("  Bal: Rs. ").append(r.balanceAfter()).append('\n');history.setText(s.length()==0?"No transactions yet.":s.toString());}catch(Exception e){history.setText("Unable to load transaction history.");}}
+    @Override public void actionPerformed(ActionEvent e){dispose();}
 }
