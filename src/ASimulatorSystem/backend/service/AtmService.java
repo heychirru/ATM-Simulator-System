@@ -6,6 +6,8 @@ import ASimulatorSystem.backend.repository.AccountRepository;
 import ASimulatorSystem.backend.repository.TransactionRepository;
 import ASimulatorSystem.security.PinHasher;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AtmService {
     private static final int MAX_FAILED_ATTEMPTS = 3;
     private static final BigDecimal MAX_WITHDRAWAL = new BigDecimal("10000.00");
+    private static final BigDecimal DAILY_WITHDRAWAL_LIMIT = new BigDecimal("20000.00");
     private final AccountRepository accounts;
     private final TransactionRepository transactions;
 
@@ -64,8 +67,10 @@ public class AtmService {
     @Transactional
     public BigDecimal withdraw(long accountId, BigDecimal amount) {
         validateAmount(amount);
-        if (amount.compareTo(MAX_WITHDRAWAL) > 0) throw new IllegalArgumentException("Maximum withdrawal is Rs. 10,000.");
+        if (amount.compareTo(MAX_WITHDRAWAL) > 0) throw new IllegalArgumentException("Maximum withdrawal is Rs. 10,000 per transaction.");
         Account account = activeAccountForUpdate(accountId);
+        BigDecimal used = transactions.totalByTypeSince(accountId, BankTransaction.Type.WITHDRAWAL, Instant.now().minus(24, ChronoUnit.HOURS));
+        if (used.add(amount).compareTo(DAILY_WITHDRAWAL_LIMIT) > 0) throw new IllegalArgumentException("Daily withdrawal limit is Rs. 20,000.");
         if (account.getBalance().compareTo(amount) < 0) throw new IllegalArgumentException("Insufficient balance.");
         BigDecimal next = account.getBalance().subtract(amount);
         account.setBalance(next);
