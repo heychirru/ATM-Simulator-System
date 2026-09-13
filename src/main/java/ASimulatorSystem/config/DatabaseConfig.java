@@ -57,9 +57,11 @@ public final class DatabaseConfig {
     }
 
     public static String poolStatus() {
-        return "active=" + DATA_SOURCE.getHikariPoolMXBean().getActive()
-                + ", idle=" + DATA_SOURCE.getHikariPoolMXBean().getIdle()
-                + ", total=" + DATA_SOURCE.getHikariPoolMXBean().getTotal();
+        var pool = DATA_SOURCE.getHikariPoolMXBean();
+        if (pool == null) return "starting";
+        return "active=" + pool.getActiveConnections()
+                + ", idle=" + pool.getIdleConnections()
+                + ", total=" + pool.getTotalConnections();
     }
 
     public static void closePool() {
