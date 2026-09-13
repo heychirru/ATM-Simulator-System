@@ -21,7 +21,7 @@ public class Deposit extends AtmFrame {
 
     private void build() {
         content.setLayout(new GridBagLayout());
-        JPanel card = AtmUi.cardLayoutPanel();
+        JPanel card = AtmUi.card();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setPreferredSize(new Dimension(520, 310));
         card.add(AtmUi.label("Deposit money", 25, true));
@@ -32,11 +32,11 @@ public class Deposit extends AtmFrame {
         card.add(Box.createVerticalStrut(24));
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
-        JButton back = dashboardButton();
+        actions.add(dashboardButton());
         JButton submit = AtmUi.primary("DEPOSIT MONEY");
         submit.setPreferredSize(new Dimension(155, 40));
         submit.addActionListener(e -> deposit());
-        actions.add(back); actions.add(submit);
+        actions.add(submit);
         card.add(actions);
         content.add(card);
         getRootPane().setDefaultButton(submit);
