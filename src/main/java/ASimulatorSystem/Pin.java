@@ -1,11 +1,68 @@
 package ASimulatorSystem;
 
 import ASimulatorSystem.service.AuthService;
-import java.awt.*;import java.awt.event.*;import javax.swing.*;
+import ASimulatorSystem.ui.AtmFrame;
+import ASimulatorSystem.ui.AtmUi;
+import java.awt.*;
+import javax.swing.*;
 
-public class Pin extends JFrame implements ActionListener{
-    private final long accountId;private final JPasswordField current=new JPasswordField(),next=new JPasswordField(),confirm=new JPasswordField();private final JButton change=new JButton("CHANGE PIN"),back=new JButton("BACK");private final AuthService service=new AuthService();
-    public Pin(long accountId){this.accountId=accountId;setTitle("PIN CHANGE");setSize(620,440);setLocationRelativeTo(null);setDefaultCloseOperation(EXIT_ON_CLOSE);setLayout(null);getContentPane().setBackground(Color.WHITE);JLabel t=new JLabel("CHANGE PIN");t.setBounds(235,35,200,35);t.setFont(new Font("Arial",Font.BOLD,24));add(t);field("Current PIN",current,90,100);field("New PIN",next,90,155);field("Confirm New PIN",confirm,90,210);button(change,155,290,150);button(back,315,290,120);setVisible(true);}
-    private void field(String n,JComponent c,int x,int y){JLabel l=new JLabel(n);l.setBounds(x,y-25,180,22);add(l);c.setBounds(290,y,220,30);add(c);}private void button(JButton b,int x,int y,int w){b.setBounds(x,y,w,35);b.setBackground(Color.BLACK);b.setForeground(Color.WHITE);b.addActionListener(this);add(b);}
-    @Override public void actionPerformed(ActionEvent e){if(e.getSource()==back){dispose();new Transactions(accountId);return;}String n=new String(next.getPassword()),c=new String(confirm.getPassword());if(!n.equals(c)){JOptionPane.showMessageDialog(this,"New PINs do not match.");return;}try{service.changePin(accountId,new String(current.getPassword()),n);JOptionPane.showMessageDialog(this,"PIN changed successfully.");dispose();new Transactions(accountId);}catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage(),"PIN change failed",JOptionPane.WARNING_MESSAGE);}}
+/** Secure PIN change screen. */
+public class Pin extends AtmFrame {
+    private final JPasswordField current = AtmUi.passwordField();
+    private final JPasswordField next = AtmUi.passwordField();
+    private final JPasswordField confirm = AtmUi.passwordField();
+    private final AuthService service = new AuthService();
+
+    public Pin(long accountId) {
+        super("PIN Change", accountId, 760, 570);
+        build();
+        setVisible(true);
+    }
+
+    private void build() {
+        content.setLayout(new GridBagLayout());
+        JPanel card = AtmUi.cardLayoutPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(520, 380));
+        card.add(AtmUi.label("Change your PIN", 25, true));
+        card.add(Box.createVerticalStrut(6));
+        card.add(AtmUi.muted("Use a new 4-digit PIN that is different from your current PIN."));
+        card.add(Box.createVerticalStrut(24));
+        card.add(AtmUi.formRow("CURRENT PIN", current));
+        card.add(Box.createVerticalStrut(12));
+        card.add(AtmUi.formRow("NEW PIN", next));
+        card.add(Box.createVerticalStrut(12));
+        card.add(AtmUi.formRow("CONFIRM NEW PIN", confirm));
+        card.add(Box.createVerticalStrut(22));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+        actions.add(dashboardButton());
+        JButton change = AtmUi.primary("CHANGE PIN");
+        change.setPreferredSize(new Dimension(135, 40));
+        change.addActionListener(e -> changePin());
+        actions.add(change);
+        card.add(actions);
+        content.add(card);
+        getRootPane().setDefaultButton(change);
+    }
+
+    private void changePin() {
+        String currentPin = new String(current.getPassword());
+        String newPin = new String(next.getPassword());
+        String confirmPin = new String(confirm.getPassword());
+        if (!newPin.equals(confirmPin)) {
+            JOptionPane.showMessageDialog(this, "New PINs do not match.", "PIN change", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            service.changePin(accountId, currentPin, newPin);
+            current.setText(""); next.setText(""); confirm.setText("");
+            JOptionPane.showMessageDialog(this, "Your PIN was changed successfully.", "PIN changed", JOptionPane.INFORMATION_MESSAGE);
+            AtmUi.backToDashboard(this, accountId);
+        } catch (Exception ex) {
+            AtmUi.showError(this, "PIN change failed", ex);
+        } finally {
+            current.setText(""); next.setText(""); confirm.setText("");
+        }
+    }
 }
