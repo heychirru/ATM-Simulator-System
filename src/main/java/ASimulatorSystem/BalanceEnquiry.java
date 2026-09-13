@@ -1,10 +1,54 @@
 package ASimulatorSystem;
 
 import ASimulatorSystem.service.TransactionService;
-import java.awt.*;import java.awt.event.*;import javax.swing.*;
+import ASimulatorSystem.ui.AtmFrame;
+import ASimulatorSystem.ui.AtmUi;
+import java.awt.*;
+import java.math.BigDecimal;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-public class BalanceEnquiry extends JFrame implements ActionListener{
-    private final long accountId; private final JLabel balance=new JLabel(); private final JButton back=new JButton("BACK");
-    public BalanceEnquiry(long accountId){this.accountId=accountId;setTitle("BALANCE ENQUIRY");setSize(620,360);setLocationRelativeTo(null);setDefaultCloseOperation(EXIT_ON_CLOSE);setLayout(null);getContentPane().setBackground(Color.WHITE);JLabel t=new JLabel("BALANCE ENQUIRY");t.setBounds(205,45,260,35);t.setFont(new Font("Arial",Font.BOLD,24));add(t);balance.setBounds(120,130,400,35);balance.setFont(new Font("Arial",Font.BOLD,18));balance.setHorizontalAlignment(SwingConstants.CENTER);add(balance);back.setBounds(235,220,140,38);back.setBackground(Color.BLACK);back.setForeground(Color.WHITE);back.addActionListener(this);add(back);try{balance.setText("Current Balance: Rs. "+new TransactionService().balance(accountId));}catch(Exception e){balance.setText("Unable to load balance");}setVisible(true);}
-    @Override public void actionPerformed(ActionEvent e){dispose();new Transactions(accountId);}
+/** Current balance screen. */
+public class BalanceEnquiry extends AtmFrame {
+    private final JLabel balance = AtmUi.label("₹ --", 38, true);
+    private final TransactionService service = new TransactionService();
+
+    public BalanceEnquiry(long accountId) {
+        super("Balance Enquiry", accountId, 760, 500);
+        build();
+        loadBalance();
+        setVisible(true);
+    }
+
+    private void build() {
+        content.setLayout(new GridBagLayout());
+        JPanel card = AtmUi.cardLayoutPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setPreferredSize(new Dimension(500, 285));
+        JLabel caption = AtmUi.muted("CURRENT AVAILABLE BALANCE");
+        caption.setAlignmentX(Component.CENTER_ALIGNMENT);
+        balance.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(caption);
+        card.add(Box.createVerticalStrut(8));
+        card.add(balance);
+        card.add(Box.createVerticalStrut(8));
+        JLabel note = AtmUi.muted("Balance is retrieved securely from the database.");
+        note.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(note);
+        card.add(Box.createVerticalGlue());
+        JButton back = dashboardButton();
+        back.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(back);
+        content.add(card);
+    }
+
+    private void loadBalance() {
+        try {
+            BigDecimal value = service.balance(accountId);
+            balance.setText("₹ " + value.setScale(2));
+        } catch (Exception ex) {
+            balance.setText("Unavailable");
+            AtmUi.showError(this, "Balance unavailable", ex);
+        }
+    }
 }
