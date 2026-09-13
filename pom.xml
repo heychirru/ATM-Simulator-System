@@ -14,6 +14,7 @@
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.12.2</junit.version>
+        <hikari.version>6.3.3</hikari.version>
     </properties>
 
     <dependencies>
@@ -21,6 +22,11 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>9.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${hikari.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -36,9 +42,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.0</version>
-                <configuration>
-                    <release>17</release>
-                </configuration>
+                <configuration><release>17</release></configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -50,11 +54,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.4.2</version>
                 <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>ASimulatorSystem.Main</mainClass>
-                        </manifest>
-                    </archive>
+                    <archive><manifest><mainClass>ASimulatorSystem.Main</mainClass></manifest></archive>
                 </configuration>
             </plugin>
             <plugin>
