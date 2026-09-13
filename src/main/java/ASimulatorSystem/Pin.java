@@ -21,7 +21,7 @@ public class Pin extends AtmFrame {
 
     private void build() {
         content.setLayout(new GridBagLayout());
-        JPanel card = AtmUi.cardLayoutPanel();
+        JPanel card = AtmUi.card();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setPreferredSize(new Dimension(520, 380));
         card.add(AtmUi.label("Change your PIN", 25, true));
@@ -56,7 +56,6 @@ public class Pin extends AtmFrame {
         }
         try {
             service.changePin(accountId, currentPin, newPin);
-            current.setText(""); next.setText(""); confirm.setText("");
             JOptionPane.showMessageDialog(this, "Your PIN was changed successfully.", "PIN changed", JOptionPane.INFORMATION_MESSAGE);
             AtmUi.backToDashboard(this, accountId);
         } catch (Exception ex) {
