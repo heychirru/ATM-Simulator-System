@@ -6,6 +6,7 @@ A secure **Java 17 Swing desktop ATM simulator** backed directly by MySQL.
 
 ## Features
 
+- Polished, consistent desktop UI across the complete ATM journey
 - Secure card-number + 4-digit PIN login
 - PBKDF2 PIN hashing with a unique random salt
 - Account blocking after 3 failed PIN attempts
@@ -15,7 +16,9 @@ A secure **Java 17 Swing desktop ATM simulator** backed directly by MySQL.
 - Balance enquiry
 - Mini statement with recent transactions
 - PIN change
-- Logout and clean desktop navigation
+- Logout and shared dashboard navigation
+- Live database connection status in the desktop UI
+- HikariCP database connection pooling
 - Prepared SQL statements throughout the DAO layer
 - Atomic money operations with database transactions and row locking
 - Maximum withdrawal: **Rs. 10,000 per transaction**
@@ -27,32 +30,36 @@ A secure **Java 17 Swing desktop ATM simulator** backed directly by MySQL.
 ## Architecture
 
 ```text
-┌───────────────────────────────┐
-│       Java Swing Desktop      │
-│ Login • Signup • ATM Menu     │
-│ Deposit • Withdraw • Balance  │
-│ Statement • Fast Cash • PIN   │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│          Service Layer        │
-│ AuthService                   │
-│ AccountService                │
-│ TransactionService            │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│             DAO               │
-│ AccountDao • TransactionDao   │
-└───────────────┬───────────────┘
-                │ JDBC
-                ▼
-┌───────────────────────────────┐
-│             MySQL             │
-│ accounts • transactions       │
-└───────────────────────────────┘
+┌────────────────────────────────────────┐
+│          Java Swing Desktop            │
+│ Login → Signup → Dashboard → Operations│
+│ Shared UI theme + authenticated shell  │
+└───────────────────┬────────────────────┘
+                    │ accountId
+                    ▼
+┌────────────────────────────────────────┐
+│             Service Layer              │
+│ AuthService • AccountService           │
+│ TransactionService                     │
+└───────────────────┬────────────────────┘
+                    │
+                    ▼
+┌────────────────────────────────────────┐
+│                DAO Layer               │
+│ AccountDao • TransactionDao            │
+└───────────────────┬────────────────────┘
+                    │ pooled JDBC
+                    ▼
+┌────────────────────────────────────────┐
+│       HikariCP Connection Pool         │
+│      8 max • 2 minimum idle            │
+└───────────────────┬────────────────────┘
+                    │
+                    ▼
+┌────────────────────────────────────────┐
+│                 MySQL                  │
+│       accounts • transactions          │
+└────────────────────────────────────────┘
 ```
 
 The application is intentionally **desktop-only**. There is no REST server, JWT session, browser frontend, or cloud runtime required by the ATM application.
@@ -82,10 +89,13 @@ ATM-Simulator-System/
 │   │   │   └── TransactionDao.java
 │   │   ├── security/
 │   │   │   └── PinHasher.java
-│   │   └── service/
-│   │       ├── AuthService.java
-│   │       ├── AccountService.java
-│   │       └── TransactionService.java
+│   │   ├── service/
+│   │   │   ├── AuthService.java
+│   │   │   ├── AccountService.java
+│   │   │   └── TransactionService.java
+│   │   └── ui/
+│   │       ├── AtmFrame.java
+│   │       └── AtmUi.java
 │   └── test/java/
 ├── pom.xml
 └── .github/workflows/ci.yml
@@ -140,6 +150,8 @@ mvn -Ddb.url="jdbc:mysql://localhost:3306/bankmanagementsystem" -Ddb.username=ro
 
 Do not commit real database credentials.
 
+The application uses HikariCP to reuse MySQL connections. DAO code still uses normal try-with-resources; closing a connection returns it to the pool instead of opening a new physical connection every time.
+
 ## Run the application
 
 Build and test:
@@ -152,6 +164,12 @@ Run directly with Maven:
 
 ```bash
 mvn exec:java -Dexec.mainClass=ASimulatorSystem.Main
+```
+
+On Windows PowerShell, quote the property argument if PowerShell parses it incorrectly:
+
+```powershell
+mvn exec:java "-Dexec.mainClass=ASimulatorSystem.Main"
 ```
 
 Or build the executable JAR:
@@ -172,6 +190,7 @@ The application opens the Swing login window.
 5. A successful login creates a session using the account ID; the PIN is not passed between screens.
 6. Transaction services perform validation before calling the DAO layer.
 7. Withdrawals lock the account row and update the balance and transaction history atomically.
+8. Database connections are borrowed from HikariCP and returned automatically through try-with-resources.
 
 PINs are never stored as plaintext and are never written to application logs.
 
