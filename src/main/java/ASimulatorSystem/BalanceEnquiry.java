@@ -22,7 +22,7 @@ public class BalanceEnquiry extends AtmFrame {
 
     private void build() {
         content.setLayout(new GridBagLayout());
-        JPanel card = AtmUi.cardLayoutPanel();
+        JPanel card = AtmUi.card();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setPreferredSize(new Dimension(500, 285));
         JLabel caption = AtmUi.muted("CURRENT AVAILABLE BALANCE");
