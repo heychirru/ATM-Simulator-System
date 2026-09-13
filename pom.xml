@@ -6,7 +6,7 @@
 
     <groupId>in.chirru</groupId>
     <artifactId>atm-simulator-system</artifactId>
-    <version>3.0.0</version>
+    <version>4.0.0</version>
     <name>ATM Simulator System</name>
     <description>Secure Java Swing desktop ATM simulator</description>
 
@@ -38,9 +38,6 @@
                 <version>3.14.0</version>
                 <configuration>
                     <release>17</release>
-                    <excludes>
-                        <exclude>ASimulatorSystem/backend/**</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -55,7 +52,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ASimulatorSystem.Login</mainClass>
+                            <mainClass>ASimulatorSystem.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
