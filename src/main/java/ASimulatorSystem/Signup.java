@@ -1,40 +1,91 @@
 package ASimulatorSystem;
 
 import ASimulatorSystem.service.AuthService;
+import ASimulatorSystem.ui.AtmUi;
 import java.awt.*;
-import java.awt.event.*;
 import java.math.BigDecimal;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-/** Creates an ATM account with a hashed PIN. */
-public class Signup extends JFrame implements ActionListener {
-    private final JTextField card = new JTextField();
-    private final JPasswordField pin = new JPasswordField();
-    private final JPasswordField confirm = new JPasswordField();
-    private final JTextField deposit = new JTextField("0");
-    private final JButton create = new JButton("CREATE ACCOUNT");
-    private final JButton back = new JButton("BACK");
+/** Account creation screen for the desktop ATM. */
+public class Signup extends JFrame {
+    private final JTextField card = AtmUi.field();
+    private final JPasswordField pin = AtmUi.passwordField();
+    private final JPasswordField confirm = AtmUi.passwordField();
+    private final JTextField deposit = AtmUi.field();
+    private final JButton create = AtmUi.primary("CREATE ACCOUNT");
+    private final JButton back = AtmUi.secondary("BACK TO LOGIN");
     private final AuthService authService = new AuthService();
 
     public Signup() {
-        setTitle("ATM - Create Account"); setSize(650, 470); setLocationRelativeTo(null); setDefaultCloseOperation(EXIT_ON_CLOSE); setLayout(null); getContentPane().setBackground(Color.WHITE);
-        add(label("CREATE ATM ACCOUNT", 175, 30, 350, 35, 27));
-        field("Card Number (12-19 digits)", card, 85, 105); field("PIN (4 digits)", pin, 85, 160); field("Confirm PIN", confirm, 85, 215); field("Initial Deposit", deposit, 85, 270);
-        button(create, 150, 345, 180, 35); button(back, 345, 345, 120, 35); setVisible(true);
+        AtmUi.frame(this, "Create Account", 900, 650);
+        build();
+        setVisible(true);
     }
-    private JLabel label(String s,int x,int y,int w,int h,int size){JLabel l=new JLabel(s);l.setBounds(x,y,w,h);l.setFont(new Font("Arial",Font.BOLD,size));return l;}
-    private void field(String name,JComponent c,int x,int y){add(label(name,x,y-28,260,25,14));c.setBounds(300,y,250,30);add(c);}
-    private void button(JButton b,int x,int y,int w,int h){b.setBounds(x,y,w,h);b.setBackground(Color.BLACK);b.setForeground(Color.WHITE);b.addActionListener(this);add(b);}
-    @Override public void actionPerformed(ActionEvent e){
-        if(e.getSource()==back){dispose();new Login();return;}
-        try{
-            String p=new String(pin.getPassword()), cp=new String(confirm.getPassword());
-            if(!p.equals(cp)) throw new IllegalArgumentException("PINs do not match.");
-            BigDecimal amount=new BigDecimal(deposit.getText().trim());
-            long id=authService.createAccount(card.getText().trim(),p,amount);
-            JOptionPane.showMessageDialog(this,"Account created successfully. Account ID: "+id,"Success",JOptionPane.INFORMATION_MESSAGE);
-            dispose();new Login();
-        }catch(NumberFormatException ex){JOptionPane.showMessageDialog(this,"Initial deposit must be a valid amount.","Validation",JOptionPane.WARNING_MESSAGE);}
-        catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage(),"Signup failed",JOptionPane.WARNING_MESSAGE);}
+
+    private void build() {
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setBackground(AtmUi.BG);
+        root.setBorder(new EmptyBorder(25, 25, 25, 25));
+
+        JPanel cardPanel = new JPanel();
+        cardPanel.setBackground(Color.WHITE);
+        cardPanel.setBorder(new EmptyBorder(30, 45, 30, 45));
+        cardPanel.setPreferredSize(new Dimension(570, 550));
+        cardPanel.setLayout(new BoxLayout(cardPanel, BoxLayout.Y_AXIS));
+
+        JLabel brand = AtmUi.label("CHIRRU ATM", 14, true);
+        brand.setForeground(AtmUi.BLUE);
+        cardPanel.add(brand);
+        cardPanel.add(Box.createVerticalStrut(7));
+        cardPanel.add(AtmUi.label("Create your account", 27, true));
+        cardPanel.add(Box.createVerticalStrut(5));
+        cardPanel.add(AtmUi.muted("Set up your card and secure 4-digit PIN."));
+        cardPanel.add(Box.createVerticalStrut(22));
+        cardPanel.add(AtmUi.formRow("CARD NUMBER  •  12–19 DIGITS", card));
+        cardPanel.add(Box.createVerticalStrut(12));
+        cardPanel.add(AtmUi.formRow("4-DIGIT PIN", pin));
+        cardPanel.add(Box.createVerticalStrut(12));
+        cardPanel.add(AtmUi.formRow("CONFIRM PIN", confirm));
+        cardPanel.add(Box.createVerticalStrut(12));
+        deposit.setText("0");
+        cardPanel.add(AtmUi.formRow("INITIAL DEPOSIT  •  OPTIONAL", deposit));
+        cardPanel.add(Box.createVerticalStrut(18));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+        actions.add(back);
+        create.setPreferredSize(new Dimension(155, 40));
+        actions.add(create);
+        cardPanel.add(actions);
+        cardPanel.add(Box.createVerticalStrut(14));
+        cardPanel.add(AtmUi.muted("Your PIN is securely hashed before it is stored."));
+        root.add(cardPanel);
+        add(root);
+
+        back.addActionListener(e -> { dispose(); new Login(); });
+        create.addActionListener(e -> createAccount());
+        getRootPane().setDefaultButton(create);
+    }
+
+    private void createAccount() {
+        try {
+            String p = new String(pin.getPassword());
+            String cp = new String(confirm.getPassword());
+            if (!p.equals(cp)) throw new IllegalArgumentException("PINs do not match.");
+            BigDecimal amount = new BigDecimal(deposit.getText().trim());
+            long id = authService.createAccount(card.getText().trim(), p, amount);
+            pin.setText(""); confirm.setText("");
+            JOptionPane.showMessageDialog(this,
+                    "Account created successfully.\nAccount ID: " + id,
+                    "Account created", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+            new Login();
+        } catch (NumberFormatException ex) {
+            AtmUi.showError(this, "Validation", new IllegalArgumentException("Initial deposit must be a valid amount."));
+        } catch (Exception ex) {
+            AtmUi.showError(this, "Signup failed", ex);
+        } finally {
+            pin.setText(""); confirm.setText("");
+        }
     }
 }
