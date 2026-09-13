@@ -1,5 +1,6 @@
 package ASimulatorSystem;
 
+import ASimulatorSystem.config.DatabaseConfig;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -19,6 +20,7 @@ public final class Main {
             // Fall back to the platform look and feel.
         }
 
+        Runtime.getRuntime().addShutdownHook(new Thread(DatabaseConfig::closePool, "atm-db-pool-shutdown"));
         SwingUtilities.invokeLater(Login::new);
     }
 }
