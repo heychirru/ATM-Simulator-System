@@ -1,11 +1,70 @@
 package ASimulatorSystem;
 
 import ASimulatorSystem.service.TransactionService;
-import java.awt.*;import java.awt.event.*;import java.math.BigDecimal;import javax.swing.*;
+import ASimulatorSystem.ui.AtmFrame;
+import ASimulatorSystem.ui.AtmUi;
+import java.awt.*;
+import java.math.BigDecimal;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-public class FastCash extends JFrame implements ActionListener{
-    private final long accountId; private final TransactionService service=new TransactionService(); private final JButton back=new JButton("BACK");
-    private final int[] amounts={100,500,1000,2000,5000,10000};
-    public FastCash(long accountId){this.accountId=accountId;setTitle("FAST CASH");setSize(620,480);setLocationRelativeTo(null);setDefaultCloseOperation(EXIT_ON_CLOSE);setLayout(null);getContentPane().setBackground(Color.WHITE);JLabel t=new JLabel("SELECT WITHDRAWAL AMOUNT");t.setBounds(170,45,300,35);t.setFont(new Font("Arial",Font.BOLD,22));add(t);for(int i=0;i<amounts.length;i++){JButton b=new JButton("Rs. "+amounts[i]);b.setBounds(i%2==0?100:330,110+(i/2)*55,190,38);b.setBackground(Color.BLACK);b.setForeground(Color.WHITE);b.putClientProperty("amount",amounts[i]);b.addActionListener(this);add(b);}back.setBounds(215,285,190,38);back.setBackground(Color.BLACK);back.setForeground(Color.WHITE);back.addActionListener(this);add(back);setVisible(true);}
-    @Override public void actionPerformed(ActionEvent e){if(e.getSource()==back){dispose();new Transactions(accountId);return;}JButton b=(JButton)e.getSource();int a=(int)b.getClientProperty("amount");try{BigDecimal balance=service.withdraw(accountId,BigDecimal.valueOf(a));JOptionPane.showMessageDialog(this,"Rs. "+a+" withdrawn. Balance: Rs. "+balance);dispose();new Transactions(accountId);}catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage(),"Withdrawal failed",JOptionPane.WARNING_MESSAGE);}}
+/** Quick withdrawal screen with predefined amounts. */
+public class FastCash extends AtmFrame {
+    private final TransactionService service = new TransactionService();
+    private final int[] amounts = {100, 500, 1000, 2000, 5000, 10000};
+
+    public FastCash(long accountId) {
+        super("Fast Cash", accountId, 800, 590);
+        build();
+        setVisible(true);
+    }
+
+    private void build() {
+        content.setLayout(new BorderLayout(0, 18));
+        JPanel intro = new JPanel();
+        intro.setOpaque(false);
+        intro.setLayout(new BoxLayout(intro, BoxLayout.Y_AXIS));
+        intro.add(AtmUi.label("Fast cash", 25, true));
+        intro.add(Box.createVerticalStrut(5));
+        intro.add(AtmUi.muted("Choose a preset amount for a quicker withdrawal."));
+        content.add(intro, BorderLayout.NORTH);
+
+        JPanel grid = new JPanel(new GridLayout(2, 3, 16, 16));
+        grid.setOpaque(false);
+        for (int amount : amounts) addAmount(grid, amount);
+        content.add(grid, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setOpaque(false);
+        bottom.add(AtmUi.muted("Maximum per transaction: ₹10,000"), BorderLayout.WEST);
+        bottom.add(dashboardButton(), BorderLayout.EAST);
+        content.add(bottom, BorderLayout.SOUTH);
+    }
+
+    private void addAmount(JPanel parent, int amount) {
+        JButton button = new JButton();
+        button.setLayout(new BorderLayout());
+        button.setBackground(Color.WHITE);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AtmUi.BORDER), new EmptyBorder(15, 18, 15, 18)));
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JLabel value = AtmUi.label("₹ " + amount, 20, true);
+        value.setHorizontalAlignment(SwingConstants.CENTER);
+        button.add(value, BorderLayout.CENTER);
+        button.addActionListener(e -> withdraw(amount));
+        parent.add(button);
+    }
+
+    private void withdraw(int amount) {
+        try {
+            BigDecimal balance = service.withdraw(accountId, BigDecimal.valueOf(amount));
+            JOptionPane.showMessageDialog(this,
+                    "Please collect ₹ " + amount + ".\nRemaining balance: ₹ " + balance.setScale(2),
+                    "Withdrawal successful", JOptionPane.INFORMATION_MESSAGE);
+            AtmUi.backToDashboard(this, accountId);
+        } catch (Exception ex) {
+            AtmUi.showError(this, "Withdrawal failed", ex);
+        }
+    }
 }
