@@ -20,7 +20,7 @@ public class Withdrawal extends AtmFrame {
 
     private void build() {
         content.setLayout(new GridBagLayout());
-        JPanel card = AtmUi.cardLayoutPanel();
+        JPanel card = AtmUi.card();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setPreferredSize(new Dimension(520, 320));
         card.add(AtmUi.label("Cash withdrawal", 25, true));
