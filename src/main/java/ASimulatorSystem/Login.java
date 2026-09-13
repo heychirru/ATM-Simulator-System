@@ -1,47 +1,102 @@
 package ASimulatorSystem;
 
 import ASimulatorSystem.service.AuthService;
+import ASimulatorSystem.ui.AtmUi;
 import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-/** Desktop login screen. */
-public class Login extends JFrame implements ActionListener {
-    private final JTextField cardField = new JTextField();
-    private final JPasswordField pinField = new JPasswordField();
-    private final JButton signIn = new JButton("SIGN IN");
-    private final JButton clear = new JButton("CLEAR");
-    private final JButton signUp = new JButton("SIGN UP");
+/** Entry screen for the desktop ATM. */
+public class Login extends JFrame {
+    private final JTextField cardField = AtmUi.field();
+    private final JPasswordField pinField = AtmUi.passwordField();
+    private final JButton signIn = AtmUi.primary("SIGN IN");
+    private final JButton clear = AtmUi.secondary("CLEAR");
+    private final JButton signUp = AtmUi.secondary("CREATE NEW ACCOUNT");
     private final AuthService authService = new AuthService();
 
     public Login() {
-        setTitle("ATM - Secure Login"); setSize(620, 420); setLocationRelativeTo(null); setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(null); getContentPane().setBackground(Color.WHITE);
-        add(label("WELCOME TO ATM", 190, 35, 350, 35, 30));
-        add(label("Card No:", 80, 125, 180, 30, 20));
-        cardField.setBounds(260, 125, 250, 32); add(cardField);
-        add(label("PIN:", 80, 185, 180, 30, 20));
-        pinField.setBounds(260, 185, 250, 32); add(pinField);
-        button(signIn, 150, 260, 120, 35); button(clear, 285, 260, 120, 35); button(signUp, 150, 315, 255, 35);
+        AtmUi.frame(this, "Secure Login", 900, 600);
+        build();
         setVisible(true);
     }
 
-    private JLabel label(String text, int x, int y, int w, int h, int size) { JLabel l = new JLabel(text); l.setBounds(x,y,w,h); l.setFont(new Font("Arial", Font.BOLD, size)); return l; }
-    private void button(JButton b, int x, int y, int w, int h) { b.setBounds(x,y,w,h); b.setBackground(Color.BLACK); b.setForeground(Color.WHITE); b.addActionListener(this); add(b); }
+    private void build() {
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setBackground(AtmUi.BG);
+        root.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-    @Override public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == clear) { cardField.setText(""); pinField.setText(""); return; }
-        if (e.getSource() == signUp) { dispose(); new Signup(); return; }
-        if (e.getSource() == signIn) {
-            try {
-                String card = cardField.getText().trim(); String pin = new String(pinField.getPassword());
-                AuthService.AuthResult result = authService.authenticate(card, pin);
-                if (result.success()) { dispose(); new Transactions(result.account().id()); }
-                else JOptionPane.showMessageDialog(this, result.message(), "Login", JOptionPane.WARNING_MESSAGE);
-                pinField.setText("");
-            } catch (Exception ex) { JOptionPane.showMessageDialog(this, ex.getMessage(), "Database error", JOptionPane.ERROR_MESSAGE); }
+        JPanel card = new JPanel();
+        card.setBackground(Color.WHITE);
+        card.setBorder(new EmptyBorder(38, 48, 38, 48));
+        card.setPreferredSize(new Dimension(470, 465));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        JLabel brand = AtmUi.label("CHIRRU ATM", 14, true);
+        brand.setForeground(AtmUi.BLUE);
+        brand.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(brand);
+        card.add(Box.createVerticalStrut(10));
+        JLabel title = AtmUi.label("Welcome back", 29, true);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(title);
+        card.add(Box.createVerticalStrut(6));
+        JLabel sub = AtmUi.muted("Sign in to access your secure ATM account.");
+        sub.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(sub);
+        card.add(Box.createVerticalStrut(30));
+        card.add(AtmUi.formRow("CARD NUMBER", cardField));
+        card.add(Box.createVerticalStrut(15));
+        card.add(AtmUi.formRow("4-DIGIT PIN", pinField));
+        card.add(Box.createVerticalStrut(24));
+
+        JPanel actions = new JPanel(new GridLayout(1, 2, 10, 0));
+        actions.setOpaque(false);
+        signIn.setPreferredSize(new Dimension(0, 42));
+        clear.setPreferredSize(new Dimension(0, 42));
+        actions.add(signIn); actions.add(clear);
+        card.add(actions);
+        card.add(Box.createVerticalStrut(14));
+        signUp.setAlignmentX(Component.CENTER_ALIGNMENT);
+        signUp.setPreferredSize(new Dimension(372, 40));
+        signUp.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        card.add(signUp);
+        card.add(Box.createVerticalGlue());
+
+        JPanel status = new JPanel(new BorderLayout());
+        status.setOpaque(false);
+        status.add(AtmUi.dbStatus(), BorderLayout.WEST);
+        status.add(AtmUi.muted("PINs are never stored in plain text."), BorderLayout.EAST);
+        card.add(status);
+        root.add(card);
+        add(root);
+
+        signIn.addActionListener(e -> authenticate());
+        clear.addActionListener(e -> { cardField.setText(""); pinField.setText(""); cardField.requestFocusInWindow(); });
+        signUp.addActionListener(e -> { dispose(); new Signup(); });
+        getRootPane().setDefaultButton(signIn);
+        cardField.requestFocusInWindow();
+    }
+
+    private void authenticate() {
+        try {
+            String card = cardField.getText().trim();
+            String pin = new String(pinField.getPassword());
+            AuthService.AuthResult result = authService.authenticate(card, pin);
+            pinField.setText("");
+            if (result.success()) {
+                dispose();
+                new Transactions(result.account().id());
+            } else {
+                JOptionPane.showMessageDialog(this, result.message(), "Login", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (Exception ex) {
+            pinField.setText("");
+            AtmUi.showError(this, "Database error", ex);
         }
     }
 
-    public static void main(String[] args) { SwingUtilities.invokeLater(Login::new); }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(Login::new);
+    }
 }
