@@ -1,28 +1,107 @@
 package ASimulatorSystem;
 
+import ASimulatorSystem.service.TransactionService;
+import ASimulatorSystem.ui.AtmFrame;
+import ASimulatorSystem.ui.AtmUi;
 import java.awt.*;
-import java.awt.event.*;
+import java.math.BigDecimal;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-/** Main authenticated ATM menu. No PIN is retained after authentication. */
-public class Transactions extends JFrame implements ActionListener {
-    private final long accountId;
-    private final JButton deposit=new JButton("DEPOSIT"), withdraw=new JButton("CASH WITHDRAWAL"), fastCash=new JButton("FAST CASH"), statement=new JButton("MINI STATEMENT"), pin=new JButton("PIN CHANGE"), balance=new JButton("BALANCE ENQUIRY"), exit=new JButton("LOG OUT");
+/** Main authenticated ATM dashboard. */
+public class Transactions extends AtmFrame {
+    private final TransactionService service = new TransactionService();
+    private final JLabel balance = AtmUi.label("₹ --", 28, true);
 
-    public Transactions(long accountId){
-        this.accountId=accountId; setTitle("ATM - Transactions");setSize(650,560);setLocationRelativeTo(null);setDefaultCloseOperation(EXIT_ON_CLOSE);setLayout(null);getContentPane().setBackground(Color.WHITE);
-        JLabel title=new JLabel("PLEASE SELECT YOUR TRANSACTION");title.setBounds(145,55,400,35);title.setFont(new Font("Arial",Font.BOLD,20));add(title);
-        JButton[] buttons={deposit,withdraw,fastCash,statement,pin,balance,exit}; int y=125;
-        for(int i=0;i<buttons.length;i++){JButton b=buttons[i];b.setBounds(i==6?225:(i%2==0?105:345),y,200,38);b.setBackground(Color.BLACK);b.setForeground(Color.WHITE);b.addActionListener(this);add(b);if(i<6&&i%2==1)y+=55;if(i==6)y+=55;}
+    public Transactions(long accountId) {
+        super("Dashboard", accountId, 900, 650);
+        build();
+        loadBalance();
         setVisible(true);
     }
-    @Override public void actionPerformed(ActionEvent e){
-        if(e.getSource()==deposit){dispose();new Deposit(accountId);}
-        else if(e.getSource()==withdraw){dispose();new Withdrawal(accountId);}
-        else if(e.getSource()==fastCash){dispose();new FastCash(accountId);}
-        else if(e.getSource()==statement){new MiniStatement(accountId);}
-        else if(e.getSource()==pin){dispose();new Pin(accountId);}
-        else if(e.getSource()==balance){dispose();new BalanceEnquiry(accountId);}
-        else {dispose();new Login();}
+
+    private void build() {
+        content.setLayout(new BorderLayout(0, 22));
+
+        JPanel welcome = new JPanel(new BorderLayout());
+        welcome.setOpaque(false);
+        JPanel copy = new JPanel();
+        copy.setOpaque(false);
+        copy.setLayout(new BoxLayout(copy, BoxLayout.Y_AXIS));
+        copy.add(AtmUi.label("Welcome back", 26, true));
+        copy.add(Box.createVerticalStrut(5));
+        copy.add(AtmUi.muted("Choose an operation to manage your account."));
+        welcome.add(copy, BorderLayout.WEST);
+
+        JPanel balanceCard = new JPanel(new BorderLayout(14, 0));
+        balanceCard.setBackground(AtmUi.NAVY);
+        balanceCard.setBorder(new EmptyBorder(16, 22, 16, 22));
+        JPanel balanceCopy = new JPanel();
+        balanceCopy.setOpaque(false);
+        balanceCopy.setLayout(new BoxLayout(balanceCopy, BoxLayout.Y_AXIS));
+        JLabel small = new JLabel("AVAILABLE BALANCE");
+        small.setForeground(new Color(180, 194, 214));
+        small.setFont(new Font("SansSerif", Font.BOLD, 10));
+        balance.setForeground(Color.WHITE);
+        balanceCopy.add(small); balanceCopy.add(Box.createVerticalStrut(3)); balanceCopy.add(balance);
+        balanceCard.add(balanceCopy, BorderLayout.CENTER);
+        welcome.add(balanceCard, BorderLayout.EAST);
+        content.add(welcome, BorderLayout.NORTH);
+
+        JPanel actions = new JPanel(new GridLayout(2, 3, 16, 16));
+        actions.setOpaque(false);
+        addAction(actions, "Deposit", "Add money to your account", () -> open(new Deposit(accountId)));
+        addAction(actions, "Cash Withdrawal", "Withdraw a custom amount", () -> open(new Withdrawal(accountId)));
+        addAction(actions, "Fast Cash", "Quick predefined withdrawals", () -> open(new FastCash(accountId)));
+        addAction(actions, "Balance Enquiry", "View your current balance", () -> open(new BalanceEnquiry(accountId)));
+        addAction(actions, "Mini Statement", "Review recent transactions", () -> new MiniStatement(accountId).setVisible(true));
+        addAction(actions, "PIN Change", "Update your 4-digit PIN", () -> open(new Pin(accountId)));
+        content.add(actions, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setOpaque(false);
+        JLabel security = AtmUi.muted("Never share your card number or PIN with anyone.");
+        JButton logout = AtmUi.secondary("LOG OUT");
+        logout.setPreferredSize(new Dimension(120, 38));
+        logout.addActionListener(e -> AtmUi.logout(this));
+        bottom.add(security, BorderLayout.WEST);
+        bottom.add(logout, BorderLayout.EAST);
+        content.add(bottom, BorderLayout.SOUTH);
+    }
+
+    private void addAction(JPanel parent, String title, String subtitle, Runnable action) {
+        JButton button = new JButton();
+        button.setLayout(new BorderLayout(10, 3));
+        button.setBackground(Color.WHITE);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AtmUi.BORDER), new EmptyBorder(15, 17, 15, 17)));
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JLabel t = AtmUi.label(title, 15, true);
+        JLabel s = AtmUi.muted(subtitle);
+        JPanel text = new JPanel();
+        text.setOpaque(false);
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+        text.add(t); text.add(Box.createVerticalStrut(5)); text.add(s);
+        JLabel arrow = AtmUi.label("›", 28, false);
+        arrow.setForeground(AtmUi.BLUE);
+        button.add(text, BorderLayout.CENTER);
+        button.add(arrow, BorderLayout.EAST);
+        button.addActionListener(e -> action.run());
+        parent.add(button);
+    }
+
+    private void open(JFrame frame) {
+        dispose();
+        frame.setVisible(true);
+    }
+
+    private void loadBalance() {
+        try {
+            BigDecimal value = service.balance(accountId);
+            balance.setText("₹ " + value.setScale(2));
+        } catch (Exception ex) {
+            balance.setText("₹ --");
+        }
     }
 }
