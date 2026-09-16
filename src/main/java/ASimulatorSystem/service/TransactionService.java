@@ -18,6 +18,8 @@ public class TransactionService {
         return transactionDao.withdraw(accountId, amount);
     }
     public List<TransactionDao.TransactionRecord> recent(long accountId) throws SQLException { return transactionDao.recent(accountId, 10); }
+    public List<TransactionDao.TransactionRecord> history(long accountId) throws SQLException { return transactionDao.recent(accountId, 50); }
+
     private void validateAmount(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("Amount must be greater than zero.");
         if (amount.scale() > 2) throw new IllegalArgumentException("Amount can have at most 2 decimal places.");
