@@ -5,6 +5,7 @@ import ASimulatorSystem.ui.AtmFrame;
 import ASimulatorSystem.ui.AtmUi;
 import java.awt.*;
 import java.math.BigDecimal;
+import java.util.function.Supplier;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
@@ -50,13 +51,13 @@ public class Transactions extends AtmFrame {
 
         JPanel actions = new JPanel(new GridLayout(3, 3, 16, 16));
         actions.setOpaque(false);
-        addAction(actions, "Deposit", "Add money to your account", () -> open(new Deposit(accountId)));
-        addAction(actions, "Cash Withdrawal", "Withdraw a custom amount", () -> open(new Withdrawal(accountId)));
-        addAction(actions, "Fast Cash", "Quick predefined withdrawals", () -> open(new FastCash(accountId)));
-        addAction(actions, "Balance Enquiry", "View your current balance", () -> open(new BalanceEnquiry(accountId)));
-        addAction(actions, "Mini Statement", "Review your 10 latest transactions", () -> open(new MiniStatement(accountId)));
-        addAction(actions, "Transaction History", "View up to 50 recent transactions", () -> open(new TransactionHistory(accountId)));
-        addAction(actions, "PIN Change", "Update your 4-digit PIN", () -> open(new Pin(accountId)));
+        addAction(actions, "Deposit", "Add money to your account", () -> open(() -> new Deposit(accountId)));
+        addAction(actions, "Cash Withdrawal", "Withdraw a custom amount", () -> open(() -> new Withdrawal(accountId)));
+        addAction(actions, "Fast Cash", "Quick predefined withdrawals", () -> open(() -> new FastCash(accountId)));
+        addAction(actions, "Balance Enquiry", "View your current balance", () -> open(() -> new BalanceEnquiry(accountId)));
+        addAction(actions, "Mini Statement", "Review your 10 latest transactions", () -> open(() -> new MiniStatement(accountId)));
+        addAction(actions, "Transaction History", "View up to 50 recent transactions", () -> open(() -> new TransactionHistory(accountId)));
+        addAction(actions, "PIN Change", "Update your 4-digit PIN", () -> open(() -> new Pin(accountId)));
         content.add(actions, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new BorderLayout());
@@ -92,9 +93,10 @@ public class Transactions extends AtmFrame {
         parent.add(button);
     }
 
-    private void open(JFrame frame) {
+    /** Dispose the current window before constructing the next one, preventing stacked windows. */
+    private void open(Supplier<JFrame> screenFactory) {
         dispose();
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> screenFactory.get().setVisible(true));
     }
 
     private void loadBalance() {
