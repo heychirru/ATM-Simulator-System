@@ -14,7 +14,7 @@ public class Transactions extends AtmFrame {
     private final JLabel balance = AtmUi.label("₹ --", 28, true);
 
     public Transactions(long accountId) {
-        super("Dashboard", accountId, 900, 650);
+        super("Dashboard", accountId, 900, 680);
         build();
         loadBalance();
         setVisible(true);
@@ -48,13 +48,14 @@ public class Transactions extends AtmFrame {
         welcome.add(balanceCard, BorderLayout.EAST);
         content.add(welcome, BorderLayout.NORTH);
 
-        JPanel actions = new JPanel(new GridLayout(2, 3, 16, 16));
+        JPanel actions = new JPanel(new GridLayout(3, 3, 16, 16));
         actions.setOpaque(false);
         addAction(actions, "Deposit", "Add money to your account", () -> open(new Deposit(accountId)));
         addAction(actions, "Cash Withdrawal", "Withdraw a custom amount", () -> open(new Withdrawal(accountId)));
         addAction(actions, "Fast Cash", "Quick predefined withdrawals", () -> open(new FastCash(accountId)));
         addAction(actions, "Balance Enquiry", "View your current balance", () -> open(new BalanceEnquiry(accountId)));
-        addAction(actions, "Mini Statement", "Review recent transactions", () -> new MiniStatement(accountId).setVisible(true));
+        addAction(actions, "Mini Statement", "Review your 10 latest transactions", () -> open(new MiniStatement(accountId)));
+        addAction(actions, "Transaction History", "View up to 50 recent transactions", () -> open(new TransactionHistory(accountId)));
         addAction(actions, "PIN Change", "Update your 4-digit PIN", () -> open(new Pin(accountId)));
         content.add(actions, BorderLayout.CENTER);
 
