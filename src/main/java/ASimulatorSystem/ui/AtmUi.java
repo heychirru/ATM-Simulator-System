@@ -51,10 +51,9 @@ public final class AtmUi {
     }
 
     public static JLabel dbStatus() {
-        boolean connected = DatabaseConfig.isDatabaseAvailable();
-        JLabel status = new JLabel(connected ? "● DATABASE CONNECTED" : "● DATABASE OFFLINE");
+        JLabel status = new JLabel("● LOCAL STORAGE ACTIVE");
         status.setFont(new Font("SansSerif", Font.BOLD, 11));
-        status.setForeground(connected ? new Color(88, 210, 145) : new Color(255, 125, 125));
+        status.setForeground(new Color(88, 210, 145));
         return status;
     }
 
@@ -136,5 +135,20 @@ public final class AtmUi {
         String message = ex.getMessage() == null || ex.getMessage().isBlank()
                 ? "The operation could not be completed." : ex.getMessage();
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.WARNING_MESSAGE);
+    }
+
+    public static JPanel formRow(String name, JComponent input) {
+        JPanel row = new JPanel(new BorderLayout(0, 7));
+        row.setOpaque(false);
+        row.add(label(name, 12, true), BorderLayout.NORTH);
+        row.add(input, BorderLayout.CENTER);
+        return row;
+    }
+
+    public static JPanel card() {
+        JPanel panel = new JPanel();
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(new EmptyBorder(26, 30, 26, 30));
+        return panel;
     }
 }
